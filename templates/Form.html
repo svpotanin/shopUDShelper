@@ -13,7 +13,7 @@
                 <p>Бонусы UDS. Получайте кешбэк. Оплачивайте баллами до 30% от стоимости покупки.</p>
             </div>
             <div id="uds-check-code">
-                <select class="form-control" name="uds-type">
+                <select class="form-control select__uds_identifier_type" name="uds-type">
                     <option value="code" selected>
                         Код скидки
                     </option>
@@ -21,16 +21,27 @@
                         Телефон
                     </option>
                 </select>
+                <input class="form-control form__uds_check_code input__uds_check_code" style="margin-right: 5px;" type="text" placeholder="6-ти значный код UDS"
+                       name="code" id="uds_code" value="">
 
-                <input class="form-control" type="text" placeholder="6-ти значный код UDS"
-                       name="uds-code" value="">
-
-                <button type="button" class="btn btn-uds btn-sm js-uds-code-check-button">
+                <button type="button" class="btn btn-uds btn-sm form__uds_check_code btn__uds_check_code">
                     Получить скидку
                 </button>
-                <div id="uds-cancel-button" title="Отменить применение.">
-                    <p>&times;</p>
-                </div>
+
+
+                <input class="form-control form__uds_check_phone input__uds_check_phone" style="margin-right: 5px;" type="text" placeholder="+7 (999) 999-99-99"
+                       name="phone" autocomplete="phone" id="uds_phone" value="">
+
+                <button type="button" class="btn btn-uds btn-sm form__uds_check_phone btn__uds_check_phone">
+                    Получить кэшбек
+                </button>
+
+                <button type="button" class="btn btn-danger btn-sm btn__uds_check_cancel">
+                    Отменить
+                </button>
+{*                <div id="uds-cancel-button" title="Отменить применение.">*}
+{*                    <p>&times;</p>*}
+{*                </div>*}
 
                 <img src="/wa-apps/shop/plugins/uds/img/ajax-loader.gif" class="js-uds-loader" style="display:none;">
 
@@ -84,20 +95,104 @@
 </div>
 
 <script>
+    var app = {
+        shop_uds_discount: {json_encode($shop_uds_discount)},
+        shop_uds_total_discount: {json_encode($shop_uds_total_discount)},
+        shop_uds_user: {json_encode($shop_uds_user)},
+        cashback_message: {json_encode($cashback_message)},
+        shop_uds_points: {json_encode($shop_uds_points)},
+    };
+
+    console.log(app);
+
+    // Выбор типа идентификатора для UDS
+    $('#uds-check-code .select__uds_identifier_type').on('change', function () {
+        if (this.value == 'code') {
+            $(".form__uds_check_phone").hide();
+            $(".form__uds_check_code").show();
+        } else if (this.value == 'phone') {
+            $(".form__uds_check_code").hide();
+            $(".form__uds_check_phone").show();
+        }
+    });
+
+    // Нажатие кнопки для проверки КОДА
+    $('.btn__uds_check_code').on('click', function () {
+        let loader = $(".js-uds-loader");
+        let error_box = $(".uds-check-error");
+        let uds_user_box = $("#uds-user-profile-box");
+        let spisati_box = $(".uds-spisati-ballov");
+
+        error_box.hide();
+        uds_user_box.hide();
+        loader.show();
+
+        // let type = $('#uds-check-code select[name="uds-type"]').find(":selected").val();
+        let code = $('.input__uds_check_code').val();
+
+        if (!code) {
+            error_box.show();
+            error_box.html('Код UDS не может быть пустым.');
+            loader.hide();
+            return false;
+        }
+
+        // if (type == 'phone') {
+        //     code = '+' + code.replace(/[^0-9]/gi, '');
+        // }
+
+        $.get(
+            "/uds/check-code/",
+            {
+                code: code,
+            },
+        ).done(function (data) {
+            error_box.hide();
+            console.log(data.data)
+            if (data.data.status == 'error') {
+                // alert('error');
+                console.log('error');
+                uds_user_box.hide();
+                error_box.html(data.data.message);
+                error_box.show();
+                loader.hide();
+            } else if (data.data.status == 'success') {
+                // alert('success');
+                console.log('success');
+                console.log(data)
+                location.reload();
+            }
+        });
+    });
+
+    // Нажатие Enter в форме ввода КОДА
+    $(".input__uds_check_code").keyup(function(event) {
+        event.preventDefault();
+        if (event.keyCode === 13) {
+            $(".btn__uds_check_code").click();
+        }
+    });
+
+    // Нажатие Enter в форме ввода ТЕЛЕФОНА
+    $(".input__uds_check_phone").keyup(function(event) {
+        event.preventDefault();
+        if (event.keyCode === 13) {
+            $(".btn__uds_check_phone").click();
+        }
+    });
+
     $(function () {
 
-        // $('#uds-check-code select[name="uds-type"]').on('change', function () {
-        //     if (this.value == 'code') {
-        //         $('input[name="uds-code"]').attr('placeholder', 'Промокод UDS');
-        //         $('input[name="uds-code"]').unmask();
-        //     } else if (this.value == 'phone') {
-        //         $('input[name="uds-code"]').attr('placeholder', '+7 (999) 999-99-99');
-        //         $('input[name="uds-code"]').val("");
-        //         $('input[name="uds-code"]').mask("+7 (999) 999-99-99");
-        //     }
-        // });
+        $('input[name="uds-code"]').mask("999 999");
+        $('input[name="uds-phone"]').mask("+7 (999) 999-99-99");
 
-        {*$('.js-uds-code-check-button').on('click', function () {*}
+        $('#uds-check-code .select__uds_identifier_type').change();
+
+        $('.btn__uds_check_cancel').hide();
+
+
+
+        {*$('.btn__uds_check_phone').on('click', function () {*}
         {*    var loader = $(document).find(".js-uds-loader");*}
         {*    var error_box = $(document).find(".uds-check-error");*}
         {*    var uds_user_box = $(document).find("#uds-user-profile-box");*}

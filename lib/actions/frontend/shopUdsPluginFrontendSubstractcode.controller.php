@@ -40,7 +40,7 @@ class shopUdsPluginFrontendSubstractCodeController extends waJsonController_UdsB
             return;
         }
 
-        wa()->getStorage()->set('shop/udspoints', $points);
+        wa()->getStorage()->set('shop/uds/points', $points);
         $this->response = $this->successResponse();
     }
 

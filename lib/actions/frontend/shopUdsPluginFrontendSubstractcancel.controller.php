@@ -8,7 +8,7 @@ class shopUdsPluginFrontendSubstractCancelController extends waJsonController_Ud
     public function execute()
     {
         // Чистим сессию только от баллов
-        wa()->getStorage()->set('shop/udspoints', '');
+        wa()->getStorage()->set('shop/uds/points', '');
 
         $this->response = $this->successResponse();
     }

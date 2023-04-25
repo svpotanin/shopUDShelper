@@ -1,23 +1,16 @@
 <?php
 // TODO: Тут еще "муха не еблась" - надо что-то делать
 // TODO: Пересмотреть в соответствии с новыми данными из Handlers плагина
+
+/**
+ * Класс Плагина с обработчиками хуков и вспомогательными функциями
+ */
 class shopUdsPlugin extends shopPlugin
 {
-//	const SHOP_ID = 'shop';
-//	const PLUGIN_ID = 'uds';
-    /** @var - Свойство хранит путь к планигу */
-    protected $plugin_path;
-
-    public function __construct($info)
+   public function getPath($path)
     {
-        parent::__construct($info);
-
-        $this->plugin_path = wa('shop')->getPlugin('uds')->path;
-    }
-
-    public function getPath($path)
-    {
-        return "{$this->plugin_path}{$path}";
+        $plugin_path = wa('shop')->getPlugin('uds')->path;
+        return "{$plugin_path}{$path}";
     }
 
     public function frontendHead()
@@ -49,62 +42,85 @@ class shopUdsPlugin extends shopPlugin
 //		if ($this->getSettings('enabled')) {
 
         // validation
-        // TODO: Переделать названия всех переменных хранилища сессий - чтобы они не пересекались своим маршрутом
-        wa()->getStorage()->set('shop/udsdiscount/total_discount', '');
+        // Обнулили значение в сессии TotalDiscount
+        wa()->getStorage()->set('shop/uds/total_discount', '');
 
-        $uds_discount = wa()->getStorage()->get('shop/udsdiscount');
-        $uds_points = wa()->getStorage()->get('shop/udspoints');
-        $uds_user = wa()->getStorage()->get('shop/udsdiscount/user');
+        // Получили из сессии значение скидки
+        $session_uds_discount = wa()->getStorage()->get('shop/uds/discount');
+        // Получили из сессии кол-во баллов для списания
+        $session_uds_points = wa()->getStorage()->get('shop/uds/points');
+        // Получили из сессии все данные о пользователе UDS и прочие данные
+        $session_uds_user = wa()->getStorage()->get('shop/uds/user');
 
-        $uds_code = false;
-        $uds_type = false;
-
-        if ($uds_user) {
-            $uds_code = $uds_user['disc_code'];
-            $uds_type = $uds_user['disc_type'];
+        $uds_identifier = false;
+        $uds_identifier_type = false;
+        if ($session_uds_user) {
+            $uds_identifier = $session_uds_user['uds_discount_identifier'];
+            $uds_identifier_type = $session_uds_user['uds_discount_identifier_type'];
         }
 
         $uds_helper = new shopUdsHelperNew();
 
         $pass = false;
 
-        if ($uds_code && $uds_type) {
-            $check = $uds_helper->customerFind(array('code' => $uds_code, 'type' => $uds_type));
-            if ($check['status'] == 'ok') {
-                // check if discount from uds is not lower than storage
-                $valid_discount = true;
-                $valid_points = true;
-                if ($uds_discount) {
-                    if ($uds_discount > $check['user']['user_discount']) {
-                        $valid_discount = false;
-                    }
-                }
-                if ($uds_points) {
-                    if ($uds_points > $check['user']['user_maxpoints']) {
-                        $valid_points = false;
-                    }
-                }
-                if ($valid_discount && $valid_points) {
-                    $pass = true;
-                } else {
-                    wa()->getStorage()->set('shop/udsdiscount/user', '');
-                }
-            } else {
-                wa()->getStorage()->set('shop/udsdiscount/user', '');
-                return false;
+        if (!$uds_identifier or !$uds_identifier_type) {
+            wa()->getStorage()->set('shop/uds/user', '');
+            return;
+        }
+
+        if ($uds_identifier_type != 'phone' and $uds_identifier_type != 'code') {
+            wa()->getStorage()->set('shop/uds/user', '');
+            return;
+        }
+
+//        if ($uds_identifier && $uds_identifier_type) {
+
+        if ($uds_identifier_type == 'phone') {
+            $check_uds_participant = $uds_helper->customerFindByPhone($uds_identifier);
+        } else {
+            $check_uds_participant = $uds_helper->customerFindByCode($uds_identifier);
+        }
+
+        if ($check_uds_participant['status'] != 'success') {
+            wa()->getStorage()->set('shop/uds/user', '');
+            return;
+        }
+
+        if (!$session_uds_discount && !$session_uds_points) {
+            return;
+        }
+
+//        if ($check_uds_participant['status'] == 'success') {
+
+        // Проверка на валидность скидки и баллов
+
+        $valid_discount = true;
+        $valid_points = true;
+
+        // Если скидка есть и она больше, чем у пользователя в настройках
+        if ($session_uds_discount) {
+            if ($session_uds_discount > $check_uds_participant['data']['user']['uds_user_discount']) {
+                $valid_discount = false;
             }
         }
 
+        if ($session_uds_points) {
+            if ($session_uds_points > $check_uds_participant['data']['user']['uds_user_max_points']) {
+                $valid_points = false;
+            }
+        }
+
+        if ($valid_discount AND $valid_points) {
+            $pass = true;
+        }
+
         if (!$pass) {
+            wa()->getStorage()->set('shop/uds/user', '');
             return;
         }
 
-        if (!$uds_discount && !$uds_points) {
-            return;
-        }
-
-        $uds_discount = $uds_discount ?? 0;
-        $uds_points = $uds_points ?? 0;
+        $uds_discount = $session_uds_discount ?? 0;
+        $uds_points = $session_uds_points ?? 0;
 
         if ($uds_points > 0) {
             $add_points = $uds_points;
@@ -112,19 +128,17 @@ class shopUdsPlugin extends shopPlugin
             $add_points = 0;
         }
 
-        $out_tot = 0;
+        $total = 0;
+
         foreach ($params['order']['items'] as $item_id => $item) {
             if ($item['type'] == 'product') {
                 $skus_model = new shopProductSkusModel;
                 $sku = $skus_model->getSku($item['sku_id']);
                 if (!($this->getSettings('ignore_compare_price') && ($sku['compare_price'] - $sku['price']) > 0)) {
 
-                    $out_tot += shop_currency(
-                            $item['price'],
-                            $item['currency'],
-                            $params['order']['currency'],
-                            false
-                        ) * $item['quantity'];
+                    $price = shop_currency($item['price'], $item['currency'], $params['order']['currency'], false);
+                    $total = $total + ( $price * $item['quantity'] );
+
                 }
             }
         }
@@ -138,7 +152,7 @@ class shopUdsPlugin extends shopPlugin
         }
 
         if ($uds_discount > 0) {
-            $discount_math = $out_tot * $uds_discount / 100.00;
+            $discount_math = $total * $uds_discount / 100.00;
         }
 
         $out_discount = array();
@@ -156,7 +170,7 @@ class shopUdsPlugin extends shopPlugin
         if ($out_discount['discount'] > 0) {
             $out_discount['description'] = $description;
 
-            wa()->getStorage()->set('shop/udsdiscount/total_discount', $out_discount['discount']);
+            wa()->getStorage()->set('shop/uds/total_discount', $out_discount['discount']);
 
             return $out_discount;
         }
@@ -169,9 +183,9 @@ class shopUdsPlugin extends shopPlugin
             return;
         }
 
-        $uds_discount = wa()->getStorage()->get('shop/udsdiscount');
-        $uds_points = wa()->getStorage()->get('shop/udspoints');
-        $uds_user = wa()->getStorage()->get('shop/udsdiscount/user');
+        $uds_discount = wa()->getStorage()->get('shop/uds/discount');
+        $uds_points = wa()->getStorage()->get('shop/uds/points');
+        $uds_user = wa()->getStorage()->get('shop/uds/user');
 
         $uds_orders_model = new shopUdsOrdersModel();
 
@@ -202,8 +216,8 @@ class shopUdsPlugin extends shopPlugin
             $this->substractPoints($data);
         }
 
-        wa()->getStorage()->set('shop/udsdiscount', '');
-        wa()->getStorage()->set('shop/udspoints', '');
+        wa()->getStorage()->set('shop/uds/discount', '');
+        wa()->getStorage()->set('shop/uds/points', '');
 //        }
     }
 
@@ -308,30 +322,30 @@ class shopUdsPlugin extends shopPlugin
         $session = [];
 
 
-        $session['shop_udsdiscount_user'] = wa()->getStorage()->get('shop/udsdiscount/user');
-        $session['shop_udsdiscount'] = wa()->getStorage()->get('shop/udsdiscount');
-        $session['shop_udspoints'] = wa()->getStorage()->get('shop/udspoints');
-        $session['shop_udsdiscount_total_discount'] = wa()->getStorage()->get('shop/udsdiscount/total_discount');
+        $session['shop_uds_user'] = wa()->getStorage()->get('shop/uds/user');
+        $session['shop_uds_discount'] = wa()->getStorage()->get('shop/uds/discount');
+        $session['shop_uds_points'] = wa()->getStorage()->get('shop/uds/points');
+        $session['shop_uds_total_discount'] = wa()->getStorage()->get('shop/uds/total_discount');
 
-        if ($session['shop_udsdiscount']) {
-            $view->assign('shop_udsdiscount', $session['shop_udsdiscount']);
+        if ($session['shop_uds_discount']) {
+            $view->assign('shop_uds_discount', $session['shop_uds_discount']);
         }
 
-        if ($session['shop_udsdiscount_total_discount']) {
-            $view->assign('shop_udsdiscount_total_discount', $session['shop_udsdiscount_total_discount']);
+        if ($session['shop_uds_total_discount']) {
+            $view->assign('shop_uds_total_discount', $session['shop_uds_total_discount']);
         }
 
-        if ($session['shop_udsdiscount_user']) {
-            $view->assign('shop_udsdiscount_user', $session['shop_udsdiscount_user']);
+        if ($session['shop_uds_user']) {
+            $view->assign('shop_uds_user', $session['shop_uds_user']);
 
-            if ($session['shop_udsdiscount_user']['user_cashback'] > 0) {
-                $cashback_message_view = str_replace("[cashback-amount]", $session['shop_udsdiscount_user']['user_cashback'], $cashback_message);
+            if ($session['shop_uds_user']['user_cashback'] > 0) {
+                $cashback_message_view = str_replace("[cashback-amount]", $session['shop_uds_user']['user_cashback'], $cashback_message);
                 $view->assign('cashback_message', $cashback_message_view);
             }
 
         }
-        if ($session['shop_udspoints']) {
-            $view->assign('shop_udspoints', $session['shop_udspoints']);
+        if ($session['shop_uds_points']) {
+            $view->assign('shop_uds_points', $session['shop_uds_points']);
         }
 
         return $view->fetch($this->getPath('/templates/Form.html'));

@@ -8,9 +8,9 @@ class waJsonController_UdsBase extends waJsonController
 
     protected function setClearSession()
     {
-        wa()->getStorage()->set('shop/udsdiscount', '');
-        wa()->getStorage()->set('shop/udspoints', '');
-        wa()->getStorage()->set('shop/udsdiscount/user', '');
+        wa()->getStorage()->set('shop/uds/discount', '');
+        wa()->getStorage()->set('shop/uds/points', '');
+        wa()->getStorage()->set('shop/uds/user', '');
     }
 
     protected function errorResponse($message = 'Произошла ошибка. Пожалуйста, попробуйте еще раз!')

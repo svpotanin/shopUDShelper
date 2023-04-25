@@ -118,11 +118,11 @@ class shopUdsHelperNew
         ];
 
         if ($uds_user_info['uds_user_discount_rate'] > 0 && $identifier_type == 'code') {
-            wa()->getStorage()->set('shop/udsdiscount', $uds_user_info['uds_user_discount_rate']);
+            wa()->getStorage()->set('shop/uds/discount', $uds_user_info['uds_user_discount_rate']);
             $result['reload'] = true;
         }
         // В хранилище shop/udsdiscount/user устанавливается информация о клиенте $user_info
-        wa()->getStorage()->set('shop/udsdiscount/user', $uds_user_info);
+        wa()->getStorage()->set('shop/uds/user', $uds_user_info);
 
         // Возвращается массив $data_return с информацией о статусе запроса и данных о клиенте
         return $this->returnSuccess('return uds_user_info', $result);
