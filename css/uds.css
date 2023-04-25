@@ -1,0 +1,148 @@
+.uds-check-error{
+    color: red;
+    margin-bottom: 10px;
+    font-size: 16px;
+    border: 1px solid #ff000014;
+    padding: 10px 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+.btn-uds{
+    background-color: #c647fb;
+    background-image: linear-gradient(to bottom, #c647fb 0%, #9d27cf 100%);
+    background-repeat: repeat-x;
+    color: #fff;
+}
+.btn-uds:hover{
+    background-color: #b241e0;
+    background-image: linear-gradient(to bottom, #b03edf 0%, #7d20a5 100%);
+}
+.js-uds-loader{
+    max-width: 20px;
+    max-height: 20px;
+    margin-left: 5px;
+}
+.js-uds-loader-bal{
+    max-width: 20px;
+    max-height: 20px;
+    margin-left: 5px;
+}
+#uds-user-profile{
+    display: flex;
+    padding: 13px 23px;
+    border: 1px solid #d8d8d8;
+    border-radius: 5px;
+    margin: 10px 0px;
+    align-items: center;
+}
+.uds-user-points{
+    margin-right: 5px;
+}
+.uds-substract-input{
+    display: flex;
+    align-items:center;
+}
+.uds-app-logo{
+    max-width: 65px;
+    margin-right: 25px;
+}
+.uds-user-data p{
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+.uds-user-data{
+    width: 100%;
+}
+.uds-user-data-text{
+    font-weight: bold;
+}
+.uds-qr-code{
+    max-width: 150px;
+}
+.uds-discount{
+    display:flex;
+    align-items: center;
+}
+#uds-cancel-button{
+
+}
+#uds-cancel-button p{
+    font-size: 23px;
+    position: relative;
+    bottom: 0.8px;
+    margin-left: 5px;
+    cursor: pointer;
+    background: #c8c8c8;
+    padding: 0px 10px 0px 10px;
+    border-radius: 100%;
+    color: white;
+}
+#uds-cancel-button p:hover{
+    background: #797979;
+}
+.uds-user-discount.active{
+    font-weight: 500;
+    color: #3cc645;
+}
+#uds-cancel-points-button{
+   
+}
+#uds-cancel-points-button p:hover{
+    background: #797979;
+}
+#uds-cancel-points-button p{
+    font-size: 23px;
+    position: relative;
+    bottom: 0.8px;
+    margin-left: 5px;
+    cursor: pointer;
+    background: #c8c8c8;
+    padding: 0px 10px 0px 10px;
+    border-radius: 100%;
+    color: white;
+}
+.uds-used-points{
+    color: green;
+}
+input[name="uds-substract-amount"]{
+    margin-right: 5px;
+}
+.uds-spisati-ballov{
+    /* display:flex; */
+}
+#uds-send{
+    margin-top: 20px;
+}
+.uds-head-text p{
+    font-size: 16px;
+    margin-bottom: 10px;
+    margin-top: 0px;
+}
+#uds-check-code{
+    display:flex;
+    align-items: center;
+}
+select[name="uds-type"]{
+    margin-right: 5px;
+}
+input[name="uds-code"]{
+    margin-right: 5px;
+}
+.uds-warning{
+    border-radius: 3px;
+    margin-top: 10px;
+    background: #ffd85485;
+    padding: 8px;
+}
+@media only screen and (max-width: 600px) {
+    #uds-check-code {
+        flex-wrap: wrap;
+    }
+    select[name="uds-type"] {
+        margin-bottom: 8px;
+    }
+    input[name="uds-code"] {
+        margin-bottom: 8px;
+    }
+  }

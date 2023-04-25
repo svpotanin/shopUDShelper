@@ -1,0 +1,234 @@
+{if isset($uds_total_discount)}
+    <div class="uds-points-used">
+        Вы получили скидку от UDS в размере <strong>{$uds_total_discount}₽</strong> (она была добавлена к вашей общей сумме скидки).
+    </div>
+{/if}
+
+<div id="uds-send">
+    <div id="uds-user-profile">
+        <img class="uds-app-logo" src="/wa-apps/shop/plugins/uds/img/logo.svg">
+        <div class="uds-user-data">
+            <div class="uds-check-error" style="display:none;">Error!</div>
+            <div class="uds-head-text">
+                <p>Бонусы UDS. Получайте кешбэк. Оплачивайте баллами до 30% от стоимости покупки.</p>
+            </div>
+            <div id="uds-check-code">
+{*                {assign var="disable_if_uds_old_user_info" value=""}*}
+{*                {if isset($uds_old_user_info)}*}
+{*                    {assign var="disable_if_uds_old_user_info" value="disabled"}*}
+{*                {/if}*}
+
+                {if isset($uds_old_user_info)}
+                    <select class="form-control" name="uds-type" disabled>
+                        <option value="code" {if $uds_old_user_info['disc_type'] == 'code'} selected{/if}>
+                            Код скидки
+                        </option>
+                        <option value="phone" {if $uds_old_user_info['disc_type'] == 'phone'} selected{/if}>
+                            Телефон
+                        </option>
+                    </select>
+                {else}
+                    <select class="form-control" name="uds-type">
+                        <option value="code" selected>
+                            Код скидки
+                        </option>
+                        <option value="phone">
+                            Телефон
+                        </option>
+                    </select>
+                {/if}
+
+                <input class="form-control" {if isset($uds_old_user_info)} disabled {/if} type="text" placeholder="6-ти значный код UDS"
+                       name="uds-code" value="{if isset($uds_old_user_info)} {$uds_old_user_info['disc_code']} {/if}">
+
+                <button type="button" class="btn btn-uds btn-sm js-uds-code-check-button" {if isset($uds_old_user_info)} disabled{/if}>
+                    Получить скидку
+                </button>
+                {if isset($uds_old_user_info)}
+                    <div id="uds-cancel-button" title="Отменить применение.">
+                        <p>&times;</p>
+                    </div>
+                {/if}
+                <img src="/wa-apps/shop/plugins/uds/img/ajax-loader.gif" class="js-uds-loader" style="display:none;">
+            </div>
+
+            {if !isset($uds_old_user_info)}
+                <div class="text-center"><p><strong>У меня ещё нет бонусной карты. <a href="https://collagen-pmt.shop/programma-loyalnosti-uds/?utm_source=cart" target="_blank">ПОДКЛЮЧИТЬ.</a></strong></p></div>
+                <div class="uds-warning"><span>&#9888;</span> Рекомендуем применять скидку и списывать бонусные баллы только после того, как все операции с добавлением, удалением товаров в корзине завершены.</div>
+            {/if}
+
+            {if isset($uds_old_user_info)}
+                <div id="uds-user-profile-box">
+                    <div class="uds--user-profile">
+                        <p class="uds-user-data-text">Данные клиента:</p>
+                        <p class="uds-user-name">
+                            {$uds_old_user_info['user_name']|default:''}
+                        </p>
+
+                        <div class="uds-spisati-ballov"
+                                {if $uds_old_user_info['user_maxpoints'] > 0}
+                                    {if !$purchase_by_phone && $uds_old_user_info['disc_type'] == 'phone'}
+                                        style="display:none;"
+                                    {/if}
+                                {else}
+                                    style="display:none;"
+                                {/if}
+                        >
+                            <p class="uds-user-points">Доступные баллы UDS: <b><span class="uds-points-value">
+                                {if isset($uds_points)}
+                                    {$uds_old_user_info['user_maxpoints'] - $uds_points}
+                                    <span class="uds-used-points"> ( {$uds_points} были добавлены в заказ )</span>
+                                {else}
+                                    {$uds_old_user_info['user_maxpoints']|default:''}
+                                {/if}
+                                </span></b></p>
+
+                            <div class="uds-substract-input">
+                                <input class="form-control" type="number" min="1" max="{$uds_old_user_info['user_maxpoints']|default:0}"
+                                       placeholder="Количество баллов, которые вы хотите списать" name="uds-substract-amount"
+                                        {if isset($uds_points)}
+                                            value="{$uds_points}" disabled
+                                        {/if}
+                                >
+                                <button type="button" id="uds-substract-points-button" class="btn btn-uds btn-sm"
+                                        {if isset($uds_points)}
+                                            disabled
+                                        {/if}
+                                >
+                                    Применить
+                                </button>
+
+                                {if isset($uds_points)}
+                                    <div id="uds-cancel-points-button" title="Отменить применение баллов.">
+                                        <p>&times;</p>
+                                    </div>
+                                {/if}
+                                <img src="/wa-apps/shop/plugins/uds/img/ajax-loader.gif" class="js-uds-loader-bal"  style="display:none;">
+                            </div>
+
+                        </div>
+                        <div class="uds-discount"
+
+                                {if $uds_old_user_info['disc_type'] != 'code' || $uds_old_user_info['user_discount'] <= 0}
+                                    style="display:none;"
+                                {/if}
+
+                            <p class="uds-user-discount
+                            {if isset($uds_discount) && $uds_discount > 0}
+                                active
+                            {/if}"
+                            >
+                                Скидка:
+                                <span class="uds-discount-value">{$uds_old_user_info['user_discount']|default:''}</span>%
+                            </p>
+                        </div>
+                    </div>
+                    <div class="uds--user-cashback">
+                        {if isset($cashback_message)}
+                            <p class="uds-cashback-message">{$cashback_message}</p>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
+
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        $('#uds-check-code select[name="uds-type"]').on('change', function() {
+            if (this.value == 'code') {
+                $('input[name="uds-code"]').attr('placeholder', 'Промокод UDS');
+                $('input[name="uds-code"]').unmask();
+            } else if (this.value == 'phone') {
+                $('input[name="uds-code"]').attr('placeholder', '+7 (999) 999-99-99');
+                $('input[name="uds-code"]').val("");
+                $('input[name="uds-code"]').mask("+7 (999) 999-99-99");
+            } else if (this.value == 'uid') {
+                $('input[name="uds-code"]').attr('placeholder', '88334d26-95df-4252-9d16-237ccb912da8');
+                $('input[name="uds-code"]').unmask();
+            }
+        });
+        $('.js-uds-code-check-button').on('click', function() {
+            var loader = $(document).find(".js-uds-loader");
+            var error_box = $(document).find(".uds-check-error");
+            var uds_user_box = $(document).find("#uds-user-profile-box");
+            var spisati_box = $(document).find(".uds-spisati-ballov");
+            error_box.hide();
+            uds_user_box.hide();
+            loader.show();
+            var type = $('#uds-check-code select[name="uds-type"]').find(":selected").val();
+            var code = $('#uds-check-code input[name="uds-code"]').val();
+            if (!code) {
+                error_box.show();
+                error_box.html('Код UDS не может быть пустым.');
+                loader.hide();
+                return false;
+            }
+
+            if(type == 'phone'){
+                code = '+'+code.replace(/[^0-9]/gi, '');
+            }
+
+            var action = 'check';
+            $.get("/uds/check-code/", { type: type, code: code, action: action })
+                .done(function(data) {
+                    error_box.hide();
+                    if (data.data.status == 'error') {
+                        uds_user_box.hide();
+                        error_box.html(data.data.message);
+                        error_box.show();
+                        loader.hide();
+                    } else if (data.data.status == 'ok') {
+                        // $("#uds-user-profile-box .uds-user-name").html(data.data.user.user_name);
+                        // $("#uds-user-profile-box .uds-points-value").html(data.data.user.user_points);
+                        // $("#uds-user-profile-box .uds-discount-value").html(data.data.user.user_discount);
+                        // if (data.data.user.user_maxpoints > 0) {
+                        //    spisati_box.show();
+                        // }
+                        // uds_user_box.show();
+                        // if (data.data.reload) {
+                        location.reload();
+                        // }
+                    }
+                });
+        });
+        $('#uds-cancel-button').on('click', function() {
+            var action = 'cancel';
+            $.get("/uds/check-code/", { action: action })
+                .done(function(data) {
+                    location.reload();
+                });
+        });
+        $('#uds-substract-points-button').on('click', function() {
+            var points = $(document).find('input[name="uds-substract-amount"]').val();
+            var type = $('#uds-check-code select[name="uds-type"]').find(":selected").val();
+            var code = $('#uds-check-code input[name="uds-code"]').val();
+            var error_box = $(document).find(".uds-check-error");
+            var loader = $(document).find(".js-uds-loader-bal");
+            var action = 'substract';
+            error_box.hide();
+            loader.show();
+            $.get("/uds/substract/", { type: type, code: code, points: points, action: action })
+                .done(function(data) {
+                    if (data.data.status == 'success') {
+                        location.reload();
+                    } else if (data.data.status == 'error') {
+                        error_box.show();
+                        error_box.html(data.data.message);
+                        loader.hide();
+                    }
+                });
+        });
+
+        $('#uds-cancel-points-button').on('click', function() {
+            var action = 'cancel';
+            $.get("/uds/substract/", { action: action })
+                .done(function(data) {
+                    location.reload();
+                });
+        });
+
+    });
+</script>
