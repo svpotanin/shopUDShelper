@@ -39,49 +39,56 @@
                 <button type="button" class="btn btn-danger btn-sm btn__uds_check_cancel">
                     Отменить
                 </button>
-{*                <div id="uds-cancel-button" title="Отменить применение.">*}
-{*                    <p>&times;</p>*}
-{*                </div>*}
+                {*                <div id="uds-cancel-button" title="Отменить применение.">*}
+                {*                    <p>&times;</p>*}
+                {*                </div>*}
 
-                <img src="/wa-apps/shop/plugins/uds/img/ajax-loader.gif" class="js-uds-loader" style="display:none;">
+                <img src="/wa-apps/shop/plugins/uds/img/ajax-loader.gif" class="js-uds-loader-check">
 
             </div>
 
-            <div class="text-center"><p><strong>У меня ещё нет бонусной карты. <a href="https://collagen-pmt.shop/programma-loyalnosti-uds/?utm_source=cart" target="_blank">ПОДКЛЮЧИТЬ.</a></strong></p></div>
+            <div class="text-center text__no_uds">
+                <p>
+                    <strong>У меня ещё нет бонусной карты. <a href="https://collagen-pmt.shop/programma-loyalnosti-uds/?utm_source=cart" target="_blank">ПОДКЛЮЧИТЬ.</a></strong>
+                </p>
+            </div>
             <div class="uds-warning"><span>&#9888;</span> Рекомендуем применять скидку и списывать бонусные баллы только после того, как все операции с добавлением, удалением товаров в корзине завершены.</div>
 
-            <div id="uds-user-profile-box">
+            <div id="uds-user-profile-box" class="div__uds_user_profile">
                 <div class="uds--user-profile">
                     <p class="uds-user-data-text">Данные клиента:</p>
-                    <p class="uds-user-name">
+                    <p class="uds-user-name uds__user_name">
                         Имя пользователя
                     </p>
 
                     <div class="uds-spisati-ballov">
                         <p class="uds-user-points">
-                            Доступные баллы UDS: <b><span class="uds-points-value">100<span class="uds-used-points"> ( 000 были добавлены в заказ )</span></span></b>
+                            Доступные баллы UDS: <b><span class="uds-points-value">100</span><span class="uds-used-points"> ( <span class="uds-used-points-number">000</span> были добавлены в заказ )</span></b>
                         </p>
 
                         <div class="uds-substract-input">
-                            <input class="form-control" type="number" min="1" max="100"
+                            <input class="form-control input__uds_substract_points" type="number" min="1" max="100"
                                    placeholder="Количество баллов, которые вы хотите списать" name="uds-substract-amount">
 
-                            <button type="button" id="uds-substract-points-button" class="btn btn-uds btn-sm">
+                            <button type="button" id="uds-substract-points-button" class="btn btn-uds btn-sm btn__uds_substract_points">
                                 Применить
                             </button>
 
-                            <div id="uds-cancel-points-button" title="Отменить применение баллов.">
-                                <p>&times;</p>
-                            </div>
+                            {*                            <div id="uds-cancel-points-button" title="Отменить применение баллов.">*}
+                            {*                                <p>&times;</p>*}
+                            {*                            </div>*}
+                            <button type="button" class="btn btn-danger btn-sm btn__uds_substract_cancel" title="Отменить применение баллов.">
+                                Отменить
+                            </button>
 
-                            <img src="/wa-apps/shop/plugins/uds/img/ajax-loader.gif" class="js-uds-loader-bal" style="display:none;">
+                            <img src="/wa-apps/shop/plugins/uds/img/ajax-loader.gif" class="js-uds-loader-points">
                         </div>
 
                     </div>
                     <div class="uds-discount">
-                        <p class="uds-user-discount active>
+                        <p class="uds-user-discount">
                             Скидка:
-                            <span class=" uds-discount-value">$uds_old_user_info['user_discount']</span>%
+                            <span class="uds-discount-value">$uds_old_user_info['user_discount']</span>%
                         </p>
                     </div>
                 </div>
@@ -105,6 +112,15 @@
 
     console.log(app);
 
+    const elems = {
+        loader_check: $(".js-uds-loader-check"),
+        loader_points: $(".js-uds-loader-phone"),
+        error_box: $(".uds-check-error"),
+        uds_user_box: $(".div__uds_user_profile"),
+        spisati_box: $(".uds-spisati-ballov"),
+    };
+
+
     // Выбор типа идентификатора для UDS
     $('#uds-check-code .select__uds_identifier_type').on('change', function () {
         if (this.value == 'code') {
@@ -118,6 +134,47 @@
 
     // Нажатие кнопки для проверки КОДА
     $('.btn__uds_check_code').on('click', function () {
+        elems.error_box.hide();
+        elems.uds_user_box.hide();
+        elems.loader_check.show();
+        elems.loader_points.hide();
+
+        // let type = $('#uds-check-code select[name="uds-type"]').find(":selected").val();
+        let code = $('.input__uds_check_code').val();
+
+        if (!code) {
+            elems.error_box.show();
+            elems.error_box.html('Код UDS не может быть пустым.');
+            elems.loader_check.hide();
+            return false;
+        }
+
+        $.get(
+            "/uds/check-code/",
+            {
+                code: code,
+            },
+        ).done(function (data) {
+            elems.error_box.hide();
+            console.log(data.data)
+            if (data.data.status == 'error') {
+                // alert('error');
+                console.log('error');
+                elems.uds_user_box.hide();
+                elems.error_box.html(data.data.message);
+                elems.error_box.show();
+                elems.loader_check.hide();
+            } else if (data.data.status == 'success') {
+                // alert('success');
+                console.log('success');
+                console.log(data)
+                location.reload();
+            }
+        });
+    });
+
+    // Нажатие кнопки для проверки ТЕЛЕФОНА
+    $('.btn__uds_check_phone').on('click', function () {
         let loader = $(".js-uds-loader");
         let error_box = $(".uds-check-error");
         let uds_user_box = $("#uds-user-profile-box");
@@ -127,24 +184,22 @@
         uds_user_box.hide();
         loader.show();
 
-        // let type = $('#uds-check-code select[name="uds-type"]').find(":selected").val();
-        let code = $('.input__uds_check_code').val();
+        let phone = $('.input__uds_check_phone').val();
 
-        if (!code) {
+        if (!phone) {
             error_box.show();
-            error_box.html('Код UDS не может быть пустым.');
+            error_box.html('Телефон не может быть пустым.');
             loader.hide();
             return false;
         }
 
-        // if (type == 'phone') {
-        //     code = '+' + code.replace(/[^0-9]/gi, '');
-        // }
+        phone = '+' + phone.replace(/[^0-9]/gi, '');
+        // alert(phone);
 
         $.get(
-            "/uds/check-code/",
+            "/uds/check-phone/",
             {
-                code: code,
+                phone: phone,
             },
         ).done(function (data) {
             error_box.hide();
@@ -159,14 +214,14 @@
             } else if (data.data.status == 'success') {
                 // alert('success');
                 console.log('success');
-                console.log(data)
+                // console.log(data)
                 location.reload();
             }
         });
     });
 
     // Нажатие Enter в форме ввода КОДА
-    $(".input__uds_check_code").keyup(function(event) {
+    $(".input__uds_check_code").keyup(function (event) {
         event.preventDefault();
         if (event.keyCode === 13) {
             $(".btn__uds_check_code").click();
@@ -174,105 +229,137 @@
     });
 
     // Нажатие Enter в форме ввода ТЕЛЕФОНА
-    $(".input__uds_check_phone").keyup(function(event) {
+    $(".input__uds_check_phone").keyup(function (event) {
         event.preventDefault();
         if (event.keyCode === 13) {
             $(".btn__uds_check_phone").click();
         }
     });
 
+    $('.btn__uds_check_cancel').on('click', function () {
+        $.get("/uds/check-cancel/", {}).done(function (data) {
+            location.reload();
+        });
+    });
+
+    $('.btn__uds_substract_points').on('click', function () {
+        let points = $('.input__uds_substract_points').val();
+        let type = app.shop_uds_user.uds_discount_identifier_type;
+        let code = app.shop_uds_user.uds_discount_identifier;
+        elems.error_box.hide();
+        elems.loader_points.show();
+        $.get("/uds/substract-code/",
+            {
+                code: code,
+                points: points,
+            }
+        ).done(function (data) {
+            console.log(data);
+            if (data.data.status == 'success') {
+                console.log('success');
+                location.reload();
+            } else if (data.data.status == 'error') {
+                console.log('error');
+                elems.error_box.show();
+                elems.error_box.html(data.data.message);
+                elems.loader_points.hide();
+            }
+        });
+    });
+
+    $('.btn__uds_substract_cancel').on('click', function (event) {
+
+        $.get("/uds/substract-cancel/")
+            .done(function (data) {
+                location.reload();
+            });
+
+    });
+
     $(function () {
-
-        $('input[name="uds-code"]').mask("999 999");
-        $('input[name="uds-phone"]').mask("+7 (999) 999-99-99");
-
-        $('#uds-check-code .select__uds_identifier_type').change();
-
+        // Инициализация формы
+        $('.input__uds_check_code').mask("999999");
+        $('.input__uds_check_phone').mask("+7 (999) 999-99-99");
         $('.btn__uds_check_cancel').hide();
+        $('.btn__uds_substract_cancel').hide();
+        $('.js-uds-loader-check').hide();
+        $('.js-uds-loader-points').hide();
+
+        elems.error_box.hide();
+        elems.uds_user_box.hide();
+        elems.loader_check.hide();
+        elems.loader_points.hide();
 
 
+        if (app.shop_uds_user) {
+            $('.text__no_uds').hide();
+            $('.input__uds_check_code').attr('disabled', true);
+            $('.input__uds_check_phone').attr('disabled', true);
+            $('.select__uds_identifier_type').attr('disabled', true);
+            $('.btn__uds_check_code').attr('disabled', true);
+            $('.btn__uds_check_phone').attr('disabled', true);
+            $('.btn__uds_check_code').hide();
+            $('.btn__uds_check_phone').hide();
+            $('.input__uds_check_code').hide();
+            $('.input__uds_check_phone').hide();
+            $('.uds-substract-input').hide();
+            $('.btn__uds_check_cancel').show();
 
-        {*$('.btn__uds_check_phone').on('click', function () {*}
-        {*    var loader = $(document).find(".js-uds-loader");*}
-        {*    var error_box = $(document).find(".uds-check-error");*}
-        {*    var uds_user_box = $(document).find("#uds-user-profile-box");*}
-        {*    var spisati_box = $(document).find(".uds-spisati-ballov");*}
-        {*    error_box.hide();*}
-        {*    uds_user_box.hide();*}
-        {*    loader.show();*}
-        {*    var type = $('#uds-check-code select[name="uds-type"]').find(":selected").val();*}
-        {*    var code = $('#uds-check-code input[name="uds-code"]').val();*}
-        {*    if (!code) {*}
-        {*        error_box.show();*}
-        {*        error_box.html('Код UDS не может быть пустым.');*}
-        {*        loader.hide();*}
-        {*        return false;*}
-        {*    }*}
+            if (app.shop_uds_user.uds_discount_identifier_type == 'phone') {
+                $('.input__uds_check_code').hide();
+                $('.input__uds_check_phone').show();
+                $('.select__uds_identifier_type option[value="' + app.shop_uds_user.uds_discount_identifier_type + '"]').prop('selected', true);
+                // $('#select option[value=2]').prop('selected', true);
+                $('.input__uds_check_phone').val(app.shop_uds_user.uds_discount_identifier.replace(/%2b/g, "+"));
+            } else {
+                $('.input__uds_check_code').show();
+                $('.input__uds_check_phone').hide();
+                $('.input__uds_check_code').val(app.shop_uds_user.uds_discount_identifier);
 
-        {*    if (type == 'phone') {*}
-        {*        code = '+' + code.replace(/[^0-9]/gi, '');*}
-        {*    }*}
+                $('.uds-substract-input').show();
+            }
 
-        {*    var action = 'check';*}
-        {*    $.get("/uds/check-code/", {type: type, code: code, action: action})*}
-        {*        .done(function (data) {*}
-        {*            error_box.hide();*}
-        {*            if (data.data.status == 'error') {*}
-        {*                uds_user_box.hide();*}
-        {*                error_box.html(data.data.message);*}
-        {*                error_box.show();*}
-        {*                loader.hide();*}
-        {*            } else if (data.data.status == 'ok') {*}
-        {*                // $("#uds-user-profile-box .uds-user-name").html(data.data.user.user_name);*}
-        {*                // $("#uds-user-profile-box .uds-points-value").html(data.data.user.user_points);*}
-        {*                // $("#uds-user-profile-box .uds-discount-value").html(data.data.user.user_discount);*}
-        {*                // if (data.data.user.user_maxpoints > 0) {*}
-        {*                //    spisati_box.show();*}
-        {*                // }*}
-        {*                // uds_user_box.show();*}
-        {*                // if (data.data.reload) {*}
-        {*                location.reload();*}
-        {*                // }*}
-        {*            }*}
-        {*        });*}
-        {*});*}
+            elems.uds_user_box.find('.uds__user_name').html(app.shop_uds_user.uds_user_name);
 
-        {*$('#uds-cancel-button').on('click', function () {*}
-        {*    var action = 'cancel';*}
-        {*    $.get("/uds/check-code/", {action: action})*}
-        {*        .done(function (data) {*}
-        {*            location.reload();*}
-        {*        });*}
-        {*});*}
+            if (app.shop_uds_points) {
+                elems.uds_user_box.find('.uds-points-value').html((app.shop_uds_user.uds_user_max_points - app.shop_uds_points));
+                elems.uds_user_box.find('.uds-used-points').show();
+                elems.uds_user_box.find('.uds-used-points-number').html(app.shop_uds_points);
+                $('.input__uds_substract_points').val(app.shop_uds_points);
+                $('.input__uds_substract_points').attr('disabled', true);
+                $('.btn__uds_substract_points').attr('disabled', true);
+                $('.btn__uds_substract_points').hide();
+                $('.btn__uds_substract_cancel').show();
 
-        {*$('#uds-substract-points-button').on('click', function () {*}
-        {*    var points = $(document).find('input[name="uds-substract-amount"]').val();*}
-        {*    var type = $('#uds-check-code select[name="uds-type"]').find(":selected").val();*}
-        {*    var code = $('#uds-check-code input[name="uds-code"]').val();*}
-        {*    var error_box = $(document).find(".uds-check-error");*}
-        {*    var loader = $(document).find(".js-uds-loader-bal");*}
-        {*    var action = 'substract';*}
-        {*    error_box.hide();*}
-        {*    loader.show();*}
-        {*    $.get("/uds/substract/", {type: type, code: code, points: points, action: action})*}
-        {*        .done(function (data) {*}
-        {*            if (data.data.status == 'success') {*}
-        {*                location.reload();*}
-        {*            } else if (data.data.status == 'error') {*}
-        {*                error_box.show();*}
-        {*                error_box.html(data.data.message);*}
-        {*                loader.hide();*}
-        {*            }*}
-        {*        });*}
-        {*});*}
+            } else {
+                elems.uds_user_box.find('.uds-points-value').html((app.shop_uds_user.uds_user_max_points));
+                elems.uds_user_box.find('.uds-used-points').hide();
+                $('.btn__uds_substract_cancel').hide();
+                // $('.btn__uds_substract_points').show();
+                // $('.input__uds_substract_points').attr('disabled', false);
+                // $('.input__uds_substract_points').val('');
+            }
 
-        {*$('#uds-cancel-points-button').on('click', function () {*}
-        {*    var action = 'cancel';*}
-        {*    $.get("/uds/substract/", {action: action})*}
-        {*        .done(function (data) {*}
-        {*            location.reload();*}
-        {*        });*}
-        {*});*}
+            elems.uds_user_box.show();
+
+        } else {
+            $('.select__uds_identifier_type').change();
+        }
+
+        if (app.cashback_message) {
+            $('.uds-cashback-message').html(app.cashback_message);
+            $('.uds--user-cashback').show();
+        } else {
+            $('.uds--user-cashback').hide();
+        }
+
+        if (app.shop_uds_discount && app.shop_uds_discount > 0) {
+            $('.uds-user-discount').addClass('active');
+            $('.uds-discount-value').html(app.shop_uds_user.uds_user_discount_rate);
+        } else {
+            $('.uds-discount').hide();
+        }
+
 
     });
 </script>
