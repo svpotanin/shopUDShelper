@@ -308,6 +308,7 @@
             if (app.shop_uds_user.uds_discount_identifier_type == 'phone') {
                 $('.input__uds_check_code').hide();
                 $('.input__uds_check_phone').show();
+
                 $('.select__uds_identifier_type option[value="' + app.shop_uds_user.uds_discount_identifier_type + '"]').prop('selected', true);
                 // $('#select option[value=2]').prop('selected', true);
                 $('.input__uds_check_phone').val(app.shop_uds_user.uds_discount_identifier.replace(/%2b/g, "+"));
