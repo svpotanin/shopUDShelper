@@ -41,7 +41,7 @@ class shopUdsHelper
             $skip_loyalty = '&skipLoyaltyTotal=' . $cart_total['loyalty'];
         }
 
-        // Выполнение GET-запроса к API платформы UDS с помощью метода getHttpClient(), который возвращает объект ResponseInterface с данными о клиенте. Запрос включает в себя данные о типе искомого параметра, общей стоимости товаров в корзине и, если доступны, бонусах лояльности
+        // Выполнение GET-запроса, который возвращает объект ResponseInterface с данными о клиенте. Запрос включает в себя данные о типе искомого параметра, общей стоимости товаров в корзине и, если доступны, бонусах лояльности
         $response = $this->getHttpClient($this->baseUrl . '/customers/find?' . $find_type . '&total=' . $cart_total['total'] . $skip_loyalty);
 
         // waLog::dump($this->baseUrl . '/customers/find?' . $find_type . '&total=' . $cart_total['total'] . '&skipLoyaltyTotal=' . $cart_total['loyalty'],'dump.log');
@@ -509,13 +509,6 @@ class shopUdsHelper
         return array('total' => $cart_total, 'loyalty' => $skip_loyalty);
     }
 
-    /**
-     * @param $order_id - ID заказа
-     * @param $ord_total - Сумма из заказа
-     * @param $data - Все данные заказа из UDS
-     * @param $action - Действие над заказа
-     * @return array|false
-     */
     public function getOrderTotal($order_id, $ord_total, $data, $action)
     {
         // создают экземпляры моделей shopOrderItemsModel и shopProductParamsModel
@@ -523,9 +516,7 @@ class shopUdsHelper
         $shopProductParamsModel = new shopProductParamsModel();
         // из модели shopOrderItemsModel извлекаются все товары, относящиеся к данному заказу
         $items = $shopOrderItemsModel->getItems($order_id);
-
-
-
+        
         // вычисляется общая стоимость заказа с учетом возможных скидок и начисления бонусов лояльности
         if ($data['discount'] > 0 && $data['points'] > 0) {
             $order_total = ($ord_total * ($data['discount'] / 100)) + $data['points'];
